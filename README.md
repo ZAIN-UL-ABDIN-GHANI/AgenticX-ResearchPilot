@@ -332,5 +332,16 @@ real task queue for a multi-replica deployment).
 
 ## License
 
-MIT — see `LICENSE` (add your organization's preferred license file here;
-none is bundled by default in this deliverable).
+Custom License — Educational & Learning Use Only
+
+Copyright (c) 2026 Zain Ul Abdin Ghani
+
+This project was created by Zain Ul Abdin Ghani (Full-Stack AI Engineer, Computer Science Graduate) as an internship project.
+
+Permission is hereby granted to view, study, and inspect the code for educational and learning purposes only.
+
+RESTRICTIONS:
+1. Copying, duplicating, modifying, redistributing, or re-using any part of this source code or documentation for commercial or non-commercial purposes is strictly prohibited without explicit written consent from the author.
+2. Direct plagiarism or claiming ownership of this codebase is strictly forbidden.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
