@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: researchpilot-postgres
+    environment:
+      POSTGRES_USER: researcher
+      POSTGRES_PASSWORD: researcher_password
+      POSTGRES_DB: researchpilot_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U researcher"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - researchpilot_network
+    restart: unless-stopped
+
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: researchpilot-backend
+    environment:
+      # Database
+      DATABASE_URL: postgresql+asyncpg://researcher:researcher_password@postgres:5432/researchpilot_db
+      DATABASE_ECHO: "false"
+      
+      # Gemini API
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-your-gemini-api-key}
+      GEMINI_MODEL: gemini-2.0-flash
+      
+      # Search API
+      SEARCH_API_KEY: ${SEARCH_API_KEY:-your-search-api-key}
+      SEARCH_ENGINE_ID: ${SEARCH_ENGINE_ID:-your-search-engine-id}
+      
+      # Application
+      DEBUG: "false"
+      LOG_LEVEL: INFO
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      
+      # Agent
+      MAX_STEPS: "8"
+      RESEARCH_TIMEOUT: "300"
+      
+      # CORS
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8000,http://frontend:3000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    networks:
+      - researchpilot_network
+    command: >
+      sh -c "
+        alembic upgrade head &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    restart: unless-stopped
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://backend:8000
+    container_name: researchpilot-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - researchpilot_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  researchpilot_network:
+    driver: bridge
